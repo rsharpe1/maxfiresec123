@@ -143,7 +143,7 @@ class PrintNodePrinter(models.Model):
             job_id = resp.json()
             self.account_id.log_debug(job_id, 'printnode_post_response_%s' % function_name)
             self.sudo().write({'printjob_ids': [(0, 0, {
-                'printnode_id': job_id,
+                'printnode_id': str(job_id),
                 'description': data['title'],
             })]})
         else:

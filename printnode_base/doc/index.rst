@@ -14,6 +14,16 @@ Change Log
 
 |
 
+* 2.1.8 (2022-02-25)
+    - Fixed regression caused by new feature related to workstations printing
+
+* 2.1.7 (2022-02-23)
+    - Add possibility to link printers to workstations
+    - Convert print job ID to text (to provide compatibility with 64 bits PrintNode IDs)
+    - Improve layout of Direct Print Settings page
+    - Improve tests to mute catched errors in logs when running tests
+    - Improve Print Labels wizard: take printer from "User Rules" (if exists)
+
 * 2.1.6 (2022-01-20)
     - Improve module logic to work with PrintNode subaccounts functionality
     - Add new scenario: Print Package on Put in Pack
@@ -40,7 +50,7 @@ Change Log
     - Added auto disable the "Print Package just after Shipping Label" setting with warning if the user disables the "Packages" setting
     - Added notifications about new releases
 
-* 2.1.2 (2021-10-14)
+* 2.1.2 (2021-10-07)
     - Removed redundant report to print Pricelist from Product Label Print wizard
     - Upgrade standard Odoo Print Labels wizard to allow usage of Direct Print functionality
     - Fix access rights issues appearing for regular user due to more strict access rights Odoo policy

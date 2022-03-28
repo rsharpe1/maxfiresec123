@@ -16,7 +16,7 @@ class ProductLabelLayout(models.TransientModel):
 
     printer_id = fields.Many2one(
         comodel_name='printnode.printer',
-        default=lambda self: self._get_default_printer(),
+        default=lambda self: self._default_printer_id(),
     )
 
     printer_bin = fields.Many2one(
@@ -48,14 +48,44 @@ class ProductLabelLayout(models.TransientModel):
         default=lambda self: self._is_dpc_enabled(),
     )
 
-    def _get_default_printer(self):
+    def _default_printer_id(self):
         """
         Returns default printer for the user if DPC module enabled, otherwise - returns None
         """
         if self._is_dpc_enabled():
-            return self.env.user.printnode_printer.id or self.env.company.printnode_printer
+            # User rules
+            try:
+                report_xml_id, _ = self._prepare_report_data()
+                report_id = self.env.ref(report_xml_id)
+            except UserError:
+                # Skip custom interface errors
+                report_id = self.env['ir.actions.report']
+
+            user_rules_printer_id = self.env['printnode.rule'].search([
+                ('user_id', '=', self.env.uid),
+                ('report_id', '=', report_id.id),  # There will be no rules for report_id = False
+            ], limit=1).printer_id
+
+            # Workstation printer
+            workstation_printer_id = self.env.user._get_workstation_device(
+                'printnode_workstation_printer_id')
+
+            # Priority:
+            # 1. Printer from User Rules (if exists)
+            # 2. Default Workstation Printer (User preferences)
+            # 3. Default printer for current user (User Preferences)
+            # 4. Default printer for current company (Settings)
+            return user_rules_printer_id or workstation_printer_id or \
+                self.env.user.printnode_printer or self.env.company.printnode_printer
 
         return None
+
+    @api.onchange("print_format")
+    def _onchange_print_format(self):
+        """
+        Update printer based on selected report
+        """
+        self.printer_id = self._default_printer_id()
 
     def _is_dpc_enabled(self):
         """

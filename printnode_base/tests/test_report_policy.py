@@ -11,14 +11,14 @@ from odoo.addons.printnode_base.tests.common import TestPrintNodeCommon
 @tagged('post_install', '-at_install')
 class TestPrintNodeReport(TestPrintNodeCommon):
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_module_disabled(self):
         self.company.printnode_enabled = False
 
         with self.assertRaises(UserError), self.cr.savepoint():
             self.printer.with_user(self.user.id).printnode_check_and_raise()
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_recheck(self):
         self.company.printnode_enabled = True
         self.company.printnode_recheck = True
@@ -40,7 +40,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
 
         self.printer.with_user(self.user.id).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_report_no_size_and_printer_size(self):
         self.company.printnode_enabled = True
 
@@ -51,7 +51,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
         with self.assertRaises(UserError), self.cr.savepoint():
             self.printer.with_user(self.user.id).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_report_size_and_printer_no_size(self):
         self.company.printnode_enabled = True
 
@@ -61,7 +61,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
 
         self.printer.with_user(self.user.id).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_report_size_not_eq_printer_size(self):
         self.company.printnode_enabled = True
 
@@ -83,7 +83,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
 
         self.printer.with_user(self.user.id).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_report_type_and_printer_no_type(self):
         self.company.printnode_enabled = True
 
@@ -92,7 +92,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
 
         self.printer.with_user(self.user.id).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_report_type_not_eq_printer_type(self):
         self.company.printnode_enabled = True
 
@@ -112,7 +112,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
 
         self.printer.with_context(user=self.user).printnode_check_report(self.report)
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_attachment_wrong_type(self):
         self.company.printnode_enabled = True
 
@@ -128,7 +128,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
                 'size': self.env.ref('printnode_base.printnode_paper_a4'),
             })
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_attachment_wrong_size(self):
         self.company.printnode_enabled = True
 
@@ -144,7 +144,7 @@ class TestPrintNodeReport(TestPrintNodeCommon):
                 'size': self.env.ref('printnode_base.printnode_paper_a4'),
             })
 
-    @mute_logger('odoo.addons.printnode_base.models.printnode_device')
+    @mute_logger('odoo.addons.printnode_base.models.printnode_printer')
     def test_printnode_policy_attachment_empty_params(self):
         self.company.printnode_enabled = True
 

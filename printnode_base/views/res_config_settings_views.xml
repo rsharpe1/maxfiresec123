@@ -81,7 +81,7 @@
 
                                     <div class="content-group">
                                         <div class="mt16 row">
-                                            <label for="printnode_printer" string="Default Printer" class="col-3 col-lg-3 o_light_label" />
+                                            <label for="printnode_printer" string="Default Printer" class="col-4 col-lg-4 o_light_label" />
                                             <field name="printnode_printer" class="oe_inline" />
                                         </div>
                                     </div>
@@ -122,14 +122,13 @@
                                         then system will try to send to the printer selected below.
                                         If no printer is selected below - user will get error message.
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_right_pane">
-                                    <label for="company_label_printer" string="Default Shipping Label Printer" />
-                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
-                                    <field name="company_label_printer" class="oe_inline" />
+                                    <div class="content-group">
+                                        <div class="mt16 row">
+                                            <label for="company_label_printer" string="Default Shipping Label Printer" class="col-4 col-lg-4 o_light_label" />
+                                            <field name="company_label_printer" class="oe_inline" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -142,23 +141,23 @@
                                     <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
                                     <div class="text-muted">
                                         (Experimental) System will try to guess which Shipping Label is related to which Package.
-                                        This is quite comlex in Odoo standard and is possible ONLY if on every Delivery Order you
+                                        This is quite complex in Odoo standard and is possible ONLY if on every Delivery Order you
                                         will be using "Put In Pack" button. So quantity of Shipping Labels will be equal to quantity
                                         of Packages related to Delivery Order. So by enabling this checkbox you also will automatically
                                         enable "Put In  Pack" feature on Delivery Order AND will force users to always "Put In Pack"
                                         on Delivery Order. Additionally it will Print Package on the same Label Printer as Shipping
                                         Label (just after Shipping Label is Printed).
                                     </div>
+
+                                    <div class="content-group" attrs="{'invisible': [('print_package_with_label', '=', False)]}">
+                                        <div class="mt16 row">
+                                            <label for="printnode_package_report" class="col-4 col-lg-4 o_light_label" />
+                                            <field name="printnode_package_report" class="oe_inline" attrs="{'required': [('print_package_with_label', '=', True)]}" options="{'no_create': True}" domain="[('model', '=', 'stock.quant.package'), ('report_type', 'in', ['qweb-pdf', 'qweb-text', 'py3o'])]" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible': [('print_package_with_label', '=', False)]}">
-                                <div class="o_setting_right_pane">
-                                    <label for="printnode_package_report" class="col-3 col-lg-3 o_light_label" />
-                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
-                                    <field name="printnode_package_report" class="oe_inline" attrs="{'required': [('print_package_with_label', '=', True)]}" options="{'no_create': True}" domain="[('model', '=', 'stock.quant.package'), ('report_type', 'in', ['qweb-pdf', 'qweb-text', 'py3o'])]" />
-                                </div>
-                            </div>
 
                             <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible': [('print_package_with_label', '=', True)]}">
                                 <div class="o_setting_left_pane">
@@ -180,44 +179,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="printnode_recheck" />
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="printnode_recheck" />
-                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
-                                    <div class="text-muted">
-                                        If this checkbox is set the printer status is verified when documents are set in printing Wizard
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="im_a_teapot" />
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="im_a_teapot" />
-                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
-                                    <div class="text-muted">
-                                        Shows message that report was successfully sent to Direct Print service.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="dpc_is_allowed_to_collect_data" />
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="dpc_is_allowed_to_collect_data" />
-                                    <div class="text-muted">
-                                        We don't collect any sensitive information.
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <h2>Scales Settings</h2>
@@ -235,8 +196,7 @@
 
                                     <div class="content-group">
                                         <div class="mt16 row">
-                                            <label for="printnode_scales" string="Default Scales" class="col-3 col-lg-3 o_light_label" />
-                                            <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
+                                            <label for="printnode_scales" string="Default Scales" class="col-4 col-lg-4 o_light_label" />
                                             <field name="printnode_scales" class="oe_inline" />
                                         </div>
                                     </div>
@@ -265,9 +225,10 @@
                                 <div class="o_setting_right_pane">
                                     <label for="printnode_notification_email">Notification email</label>
                                     <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
+                                    <br />
                                     <field name="printnode_notification_email" />
                                     <div class="text-muted">
-                                        Odoo will send notification email on this email address.
+                                        Odoo will send notification emails on this email address.
                                     </div>
                                 </div>
                             </div>
@@ -279,6 +240,47 @@
                                     <field name="printnode_notification_page_limit" />
                                     <div class="text-muted">
                                         Odoo will send notificaiton email when number of available pages will be less than value of this field.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2>Technical Settings</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="printnode_recheck" />
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="printnode_recheck" />
+                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
+                                    <div class="text-muted">
+                                        If this checkbox is set the printer status is verified when documents are set in printing Wizard
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="im_a_teapot" />
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="im_a_teapot" />
+                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
+                                    <div class="text-muted">
+                                        Shows message that report was successfully sent to Direct Print service.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="dpc_is_allowed_to_collect_data" />
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="dpc_is_allowed_to_collect_data" />
+                                    <div class="text-muted">
+                                        We don't collect any sensitive information.
                                     </div>
                                 </div>
                             </div>

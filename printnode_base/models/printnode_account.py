@@ -1,12 +1,17 @@
 # Copyright 2021 VentorTech OU
 # See LICENSE file for full copyright and licensing details.
 
-import json
 import re
 import requests
 import psycopg2
 
 from odoo import api, exceptions, fields, models, registry, SUPERUSER_ID, _
+
+# Copied from request library to provide compatibility with the library
+try:
+    from simplejson import JSONDecodeError
+except ImportError:
+    from json import JSONDecodeError
 
 
 class PrintNodeAccount(models.Model):
@@ -462,7 +467,7 @@ class PrintNodeAccount(models.Model):
             self._deactivate_printers()
 
             self.status = resp.json().get('message') or e
-        except json.decoder.JSONDecodeError as e:
+        except JSONDecodeError as e:
             self._deactivate_printers()
 
             self.status = e

@@ -7,6 +7,16 @@ Change Log
 
 |
 
+* 2.1.8 (2022-02-25)
+    - Fixed regression caused by new feature related to workstations printing
+
+* 2.1.7 (2022-02-23)
+    - Add possibility to link printers to workstations
+    - Convert print job ID to text (to provide compatibility with 64 bits PrintNode IDs)
+    - Improve layout of Direct Print Settings page
+    - Improve tests to mute catched errors in logs when running tests
+    - Improve Print Labels wizard: take printer from "User Rules" (if exists)
+
 * 2.1.6 (2022-01-20)
     - Improve module logic to work with PrintNode subaccounts functionality
     - Add new scenario: Print Package on Put in Pack

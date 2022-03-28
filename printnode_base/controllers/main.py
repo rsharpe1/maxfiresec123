@@ -110,11 +110,27 @@ class ReportControllerProxy(ReportController):
 
         report_url, report_type, printer_id, printer_bin = \
             request_content[0], request_content[1], request_content[2], request_content[3]
+
+        # Get workstation devices from request (if specified)
+        # Moved to separate block for backward compatibility with old versions
+        workstation_devices = {}
+        if len(request_content) > 4:
+            workstation_devices = request_content[4]
+
         print_data['report_type'] = report_type
+
         if printer_id:
             printer_id = request.env['printnode.printer'].browse(printer_id)
         if printer_bin:
             printer_bin = request.env['printnode.printer.bin'].browse(printer_bin)
+
+        # Add workstations devices to context (if presented)
+        new_context = request.env.context.copy()
+        workstation_devices = {k: v for k, v in workstation_devices.items() if v is not None}
+
+        if workstation_devices:
+            new_context.update(workstation_devices)
+
         # STEP 1: First check if direct printing is enabled for user at all.
         # If no - not need to go further
         user = request.env.user
@@ -159,7 +175,8 @@ class ReportControllerProxy(ReportController):
         # STEP 4. Now let's check if we can define printer for the current report.
         # If not - just reset to default
         if not printer_id:
-            printer_id, printer_bin = user.get_report_printer(report.id)
+            printer_id, printer_bin = user.with_context(new_context).get_report_printer(report.id)
+
         if not printer_id:
             return print_data
 

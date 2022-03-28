@@ -11,7 +11,8 @@ class PrintNodePrintJob(models.Model):
     _name = 'printnode.printjob'
     _description = 'PrintNode Job'
 
-    printnode_id = fields.Integer('Direct Print ID')
+    # Actually, it is enough to have only 20 symbols but to be sure...
+    printnode_id = fields.Char('Direct Print ID', size=64)
 
     printer_id = fields.Many2one(
         'printnode.printer',
