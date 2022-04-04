@@ -39,9 +39,6 @@
             <field name="model">res.users</field>
             <field name="inherit_id" ref="base.view_users_form_simple_modif" />
             <field name="arch" type="xml">
-                <xpath expr="//form" position="attributes">
-                    <attribute name="js_class">printnode_res_users_preferences_form</attribute>
-                </xpath>
                 <notebook position="inside">
                     <page string="Direct Print Settings">
                         <group string="Printers" name="printing" col="2" groups="printnode_base.printnode_security_group_user">

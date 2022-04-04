@@ -32,7 +32,7 @@ class SaleOrder(models.Model):
             picking_type_to_print = self.warehouse_id.pick_type_id
 
         picking_ids = self.picking_ids.filtered(
-            lambda p: p.picking_type_id == picking_type_to_print and p.state == 'assigned')
+            lambda p: p.picking_type_id == picking_type_to_print)
 
         if picking_ids:
             printer_id.printnode_print(

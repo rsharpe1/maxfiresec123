@@ -14,6 +14,11 @@ Change Log
 
 |
 
+* 2.1.9 (2022-04-04)
+    - Add cron to clean print jobs older that 15 days
+    - Fix issue in tests when other modules are running auto-tests
+    - Fix compatibility of workstations devices feature with HR module
+
 * 2.1.8 (2022-02-25)
     - Fixed regression caused by new feature related to workstations printing
 
