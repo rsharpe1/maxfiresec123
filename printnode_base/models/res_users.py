@@ -5,6 +5,14 @@ from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 
 
+# Mapping between workstation device attributes and Odoo models
+WORKSTATION_DEVICES = {
+    'printnode_workstation_printer_id': 'printnode.printer',
+    'printnode_workstation_label_printer_id': 'printnode.printer',
+    'printnode_workstation_scales_id': 'printnode.scales',
+}
+
+
 class User(models.Model):
     """ User entity. Add 'Default Printer' field (no restrictions).
     """
@@ -91,6 +99,22 @@ class User(models.Model):
 
         return super().SELF_WRITEABLE_FIELDS + writable_fields
 
+    def read(self, fields=None, load='_classic_read'):
+        # Add information about workstation printers (if presented)
+        for workstation_device_name in WORKSTATION_DEVICES.keys():
+            if workstation_device_name not in fields:
+                # No need to return the workstation fields values
+                continue
+
+            workstation_device = self._get_workstation_device(workstation_device_name)
+
+            if workstation_device:
+                setattr(self, workstation_device_name, workstation_device)
+
+        data = super().read(fields, load)
+
+        return data
+
     def get_shipping_label_printer(self):
         """
         Printer search sequence:
@@ -157,17 +181,10 @@ class User(models.Model):
         """
         Helper method to get device set for the current workstation
         """
-        # Mapping between workstation device attributes and Odoo models
-        mapping = {
-            'printnode_workstation_printer_id': 'printnode.printer',
-            'printnode_workstation_label_printer_id': 'printnode.printer',
-            'printnode_workstation_scales_id': 'printnode.scales',
-        }
-
-        if device not in mapping:
+        if device not in WORKSTATION_DEVICES:
             return None
 
-        model = mapping[device]
+        model = WORKSTATION_DEVICES[device]
         workstation_device_id = self.env.context.get(device)
 
         if not workstation_device_id:
