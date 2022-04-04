@@ -69,7 +69,7 @@ var ActionMenu = Widget.extend({
         this.devices = WORKSTATION_DEVICES.map(
             device => {
                 // Remove printnode_ and _id from the of string
-                let deviceName = device.substring(10, device.length - 3).replaceAll('_', ' ');
+                let deviceName = device.substring(10, device.length - 3).replace(/_/g, ' ');
 
                 // Return pairs (type, name)
                 return [this._capitalizeWords(deviceName), devices[device]];

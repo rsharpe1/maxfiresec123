@@ -143,9 +143,10 @@ class ResConfigSettings(models.TransientModel):
         if self.print_package_with_label and not self.group_stock_tracking_lot:
             self.group_stock_tracking_lot = True
 
-        self.env['printnode.account'].update_main_account(
-            self.dpc_api_key,
-            self.dpc_is_allowed_to_collect_data)
+        if self.dpc_api_key:
+            self.env['printnode.account'].update_main_account(
+                self.dpc_api_key,
+                self.dpc_is_allowed_to_collect_data)
 
         super(ResConfigSettings, self).set_values()
 
