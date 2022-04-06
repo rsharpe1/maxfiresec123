@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="dymo_paperformat4X6" model="report.paperformat">
+            <field name="name">Dymo Label Sheet</field>
+            <field name="default" eval="True" />
+            <field name="format">custom</field>
+            <field name="page_height">153</field>
+            <field name="page_width">102</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">0</field>
+            <field name="margin_bottom">0</field>
+            <field name="margin_left">0</field>
+            <field name="margin_right">0</field>
+            <field name="disable_shrinking" eval="True"/>
+            <field name="dpi">96</field>
+        </record>
+
+        <record id="report_product_template_label_dymo_4_6" model="ir.actions.report">
+            <field name="name">Product Label (PDF)</field>
+            <field name="model">product.template</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">max_fire_dymo_report.dymo_custom_report</field>
+            <field name="report_file">max_fire_dymo_report.dymo_custom_report</field>
+             <field name="paperformat_id" ref="max_fire_dymo_report.dymo_paperformat4X6"/>
+            <field name="print_report_name">'Dymo Products Labels - %s' % (object.name)</field>
+            <field name="binding_type">report</field>
+        </record>
+
+    </data>
+</odoo>
+

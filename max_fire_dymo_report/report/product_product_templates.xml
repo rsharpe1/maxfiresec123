@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <template id="dymo_template4X6">
+            <div t-att-style="padding_page" >
+                <div class="o_label_full" t-att-style="table_style">
+                    <div class= "text-center o_label_small_barcode" style="margin-top:5px;">
+                        <t t-if="barcode">
+                            <!-- `quiet=0` to remove the left and right margins on the barcode -->
+                            <div t-out="barcode" style="padding:0; align:center;" t-options="{'widget': 'barcode', 'quiet': 0, 'symbology': 'auto', 'img_style': barcode_size}"/>
+                            <div class="o_label_name" style="line-height: 130%;height:2.7em;background-color: transparent; align:center;">
+                                <span t-out="barcode"/>
+                            </div>
+                        </t>
+                    </div>
+<div style="border:solid 1px;"></div>
+                    <div class="o_label_name" style="margin-top:10px; line-height: 130%;height:8.7em;background-color: transparent; padding:2mm;" >
+                        <b><span t-field="product.display_name"/></b>
+                    </div>
+                    <div style="border:solid 1px;"></div>
+                    <div class="o_label_left_column"  style=" padding:2mm;">
+                        <small class="text-nowrap" t-field="product.default_code"/>
+                    </div>
+                    <div style="border:solid 1px;"></div>
+                    <div class="text-right" style="padding: 0 4px;">
+                        <t t-if="product.is_product_variant">
+                            <strong class="o_label_price_small" t-field="product.lst_price" t-options="{'widget': 'monetary', 'label_price': True}"/>
+                        </t>
+                        <t t-else="">
+                            <strong class="o_label_price_small" t-field="product.list_price" t-options="{'widget': 'monetary', 'label_price': True}"/>
+                        </t>
+                        <div class="o_label_extra_data"  style="text-align:left; vertical-align: bottom;height:12.7em; padding-bottom:10px; padding-top:10px;">
+                            <t t-out="extra_html"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template id="dymo_container4X6">
+            <t t-call="web.html_container">
+                <t t-set="barcode_size" t-value="'width:80mm;height:20mm;'"/>
+                <t t-set="table_style" t-value="'width:94mm;height:145mm; border:solid 5px; position:absolute;display: block;'"/>
+                <t t-set="padding_page" t-value="'padding: 4mm; align:center;position: absolute; margin-left:-13px;'"/>
+                <t t-foreach="quantity.items()" t-as="barcode_and_qty_by_product">
+                    <t t-set="product" t-value="barcode_and_qty_by_product[0]"/>
+                    <t t-foreach="barcode_and_qty_by_product[1]" t-as="barcode_and_qty">
+                        <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                        <t t-foreach="range(barcode_and_qty[1])" t-as="qty">
+                            <t t-call="max_fire_dymo_report.dymo_template4X6"/>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>
+

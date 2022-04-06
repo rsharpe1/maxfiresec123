@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="dymo_custom_report">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <t t-call="max_fire_dymo_report.dymo_container4X6">
+                    <t t-set="products" t-value="products"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+</odoo>
+
