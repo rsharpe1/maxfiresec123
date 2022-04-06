@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <template id="contact_label_template">
+        <div class="o_label_sheet o_label_dymo" t-att-style="padding_page">
+            <div class="o_label_full" t-att-style="table_style">
+                <div class= "text-center o_label_small_barcode; text-align:center;" >
+                    <t t-if="doc.ref">
+                        <div t-out="doc.ref" style="padding:0" t-options="{'widget': 'barcode', 'quiet': 0, 'symbology': 'auto', 'img_style': barcode_size}"/>
+                        <div class="o_label_name" style="background-color: transparent;text-align:center;">
+                            <span t-out="doc.ref"/>
+                        </div>
+                    </t>
+                </div>
+                <div class="o_label_name" style="background-color: transparent;line-height: normal; margin-top:-30px;">
+                    <span t-field="doc.name"/>
+                </div>
+                <div class="o_label_name" style="margin-top:-15px; overflow-wrap: break-word;line-height: 1;font-size:11px;position:relative;">
+                        [<span t-esc="doc.phone" />] <span t-esc="doc.country_id.name" /> - <span t-esc="doc.city" /> - <span t-esc="doc.state_id.name" /> (<span t-esc="doc.zip" />)
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="contact_label_report">
+        <t t-call="web.html_container">
+            <t t-set="barcode_size" t-value="'width:45.5mm;height:7.5mm; text-align:center;'"/>
+            <t t-set="table_style" t-value="'width:100%;height:32mm;'"/>
+            <t t-set="padding_page" t-value="'padding: 2mm'"/>
+            <t t-set="doc" t-value="docs" />
+            <t t-call="web.internal_layout">
+                <t t-call="sd_contact_label.contact_label_template"/>
+            </t>
+        </t>
+    </template>
+
+</odoo>
+
