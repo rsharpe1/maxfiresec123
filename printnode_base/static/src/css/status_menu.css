@@ -20,10 +20,8 @@
 }
 
 .o_printnode_status_loading {
-    font-size: x-small;
-    position: absolute;
-    bottom: 50%;
-    right: 0;
+    width: 100%;
+    text-align: center;
 }
 
 .o_printnode_status_menu_rate_us {

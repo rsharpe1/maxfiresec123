@@ -1,19 +1,57 @@
 # Copyright 2021 VentorTech OU
 # See LICENSE file for full copyright and licensing details.
+
+from unittest.mock import patch
 from odoo.tests import common
 
 
 SECURITY_GROUP = 'printnode_base.printnode_security_group_user'
 
+# Devices from api.printnode
+TEST_COMPUTERS_FROM_PRINTNODE = [
+    {
+        "hostname": "ventortech@VENTORTECH-DEV",
+        "id": 413,
+        "name": "VENTORTECH-DEV",
+        "state": "disconnected",
+    },
+]
+TEST_PRINTERS_FROM_PRINTNODE = [
+    {
+        "computer": TEST_COMPUTERS_FROM_PRINTNODE[0],
+        "default": True,
+        "description": "PDF",
+        "id": 710,
+        "name": "PDF",
+        "state": 'online',
+        "capabilities": {
+            "bins": [
+                "Auto",
+                "Tray1",
+                "Tray2"
+            ],
+        },
+    },
+]
+TEST_SCALES_FROM_PRINTNODE = [
+    {
+        "computer": TEST_COMPUTERS_FROM_PRINTNODE[0],
+        'productId': '730',
+        'deviceName': 'Local Test Scales 2',
+        'deviceNum': '2222',
+    },
+]
+
 
 class TestPrintNodeCommon(common.TransactionCase):
+    """
+    Setup to be used post-install with printnode_base test configuration
+    """
 
     def setUp(self):
-        super().setUp()
+        super(TestPrintNodeCommon, self).setUp()
 
         self.company = self.env.ref('base.main_company')
-        self.company.printnode_enabled = True
-        self.company.printnode_recheck = False
 
         self.user = self.env['res.users'].with_context({
             'no_reset_password': True
@@ -27,7 +65,18 @@ class TestPrintNodeCommon(common.TransactionCase):
             ])]
         })
 
-        # report
+        # Models
+        self.so_model = self.env['ir.model'].search([('model', '=', 'sale.order')])
+
+        # Reports
+        self.so_report = self.env['ir.actions.report'].search([
+            ('name', '=', 'Quotation / Order'),
+            ('model', '=', 'sale.order'),
+        ], limit=1)
+
+        self.delivery_slip_report = self.env['ir.actions.report'].search([
+            ('name', '=', 'Delivery Slip'),
+        ], limit=1)
 
         self.report = self.env['ir.actions.report'].create({
             'name': 'Model Overview',
@@ -36,11 +85,12 @@ class TestPrintNodeCommon(common.TransactionCase):
             'report_name': 'base.report_irmodeloverview',
         })
 
-        # device
-
+        # PN account
         self.account = self.env['printnode.account'].create({
-            'api_key': 'apikey'
+            'api_key': 'apikey',
         })
+
+        # Devices
         self.computer = self.env['printnode.computer'].create({
             'name': 'Local Computer',
             'status': 'connected',
@@ -51,56 +101,95 @@ class TestPrintNodeCommon(common.TransactionCase):
             'status': 'offline',
             'computer_id': self.computer.id,
         })
-        self.policy = self.env['printnode.report.policy'].create({
-            'report_id': self.report.id,
+        self.printer_bin = self.env['printnode.printer.bin'].create({
+            'name': 'Test Bin',
+            'printer_id': self.printer.id,
         })
-        self.so_model = self.env['ir.model'].search([('model', '=', 'sale.order')])
-        self.so_report = self.env['ir.actions.report'].search([
-            ('name', '=', 'Quotation / Order'),
+        self.company_printer = self.env['printnode.printer'].create({
+            'name': 'Company Printer',
+            'status': 'online',
+            'computer_id': self.computer.id,
+        })
+        self.user_printer = self.env['printnode.printer'].create({
+            'name': 'User Printer',
+            'status': 'online',
+            'computer_id': self.computer.id,
+        })
+        self.action_printer = self.env['printnode.printer'].create({
+            'name': 'Action Printer',
+            'status': 'online',
+            'computer_id': self.computer.id,
+        })
+        self.scales = self.env['printnode.scales'].create({
+            'name': 'Local Scales',
+            'device_num': '1',
+            'printnode_id': '1',
+            'status': 'offline',
+            'computer_id': self.computer.id,
+        })
+
+        # Action methods
+        printnode_action_method = self.env['printnode.action.method'].search([
+            ('model_id', '=', self.so_model.id),
+            ('method', '=', 'action_confirm'),
         ])
-        self.action_method = self._get_or_create_action_confirm()
+        self.action_method = (printnode_action_method if printnode_action_method else
+                              self.env['printnode.action.method'].create({
+                                  'name': 'SO Print',
+                                  'model_id': self.so_model.id,
+                                  'method': 'action_confirm',
+                              }))
+
         self.action_button = self.env['printnode.action.button'].create({
             'model_id': self.so_model.id,
             'method_id': self.action_method.id,
             'description': 'Print SO by confirm button',
-            'report_id': self.so_report.id,
+            'report_id': self.report.id,
+            'printer_id': self.printer.id,
         })
+
+        # Rules
         self.user_rule = self.env['printnode.rule'].create({
             'user_id': self.user.id,
             'printer_id': self.printer.id,
             'report_id': self.so_report.id,
         })
-        self.del_slip_rep = self.env['ir.actions.report'].search([
-            ('name', '=', 'Delivery Slip'),
-        ])
 
-    def _get_or_create_action_confirm(self):
-        method = self.env['printnode.action.method'].search([
-            ('model_id', '=', self.so_model.id),
-            ('method', '=', 'action_confirm'),
-        ])
-        if not method:
-            method = self.env['printnode.action.method'].create({
-                'name': 'SO Print',
-                'model_id': self.so_model.id,
-                'method': 'action_confirm',
-            })
-        return method
+        # Scenario
+        self.scenario_action = self.env['printnode.scenario.action'].create({
+            'name': "Test Printnode Scenario Action",
+            'code': 'test_scenario_action',
+            'model_id': self.so_model.id,
+            'reports_model_id': self.so_model.id,
+        })
+        self.scenario = self.env['printnode.scenario'].create({
+            'action': self.scenario_action.id,
+            'report_id': self.so_report.id,
+        })
 
-    def _add_printers(self):
-        company_printer = self.env['printnode.printer'].create({
-            'name': 'Company Printer',
-            'status': 'online',
-            'computer_id': self.computer.id,
+        # Partner
+        self.partner = self.env['res.partner'].create({
+            'name': 'Test Partner',
+            'email': 'test.partner@example.com',
         })
-        user_printer = self.env['printnode.printer'].create({
-            'name': 'User Printer',
-            'status': 'online',
-            'computer_id': self.computer.id,
+
+        # Sale_order
+        self.sale_order = self.env['sale.order'].create({
+            'name': 'Test SO',
+            'partner_id': self.partner.id,
+            'printnode_printed': False,
         })
-        action_printer = self.env['printnode.printer'].create({
-            'name': 'Action Printer',
-            'status': 'online',
-            'computer_id': self.computer.id,
-        })
-        return company_printer, user_printer, action_printer
+
+    def _create_patch_object(self, target, attribute):
+        """
+        Improved object patcher method from
+        'https://docs.python.org/3/library/unittest.mock-examples.html?highlight=object%20patcher%20method#nesting-patches'
+
+        This method makes it easier to work with unittest.mock.patch()<.object()> functions.
+        It avoids extra nested indentation as when using patch() with the "with" context manager.
+        """
+
+        patcher = patch.object(target, attribute)
+        thing = patcher.start()
+        self.addCleanup(patcher.stop)
+        return thing

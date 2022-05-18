@@ -6,7 +6,7 @@ from odoo import api, models
 
 class StockMoveLine(models.Model):
     _name = 'stock.move.line'
-    _inherit = ['stock.move.line', 'printnode.scenario.mixin']
+    _inherit = ['stock.move.line', 'printnode.mixin', 'printnode.scenario.mixin']
 
     @api.model_create_multi
     def create(self, vals_list):

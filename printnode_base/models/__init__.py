@@ -35,3 +35,4 @@ from . import delivery_carrier
 from . import ir_http
 from . import ir_attachment
 from . import procurement_group
+from . import stock_move
