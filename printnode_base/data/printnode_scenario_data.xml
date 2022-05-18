@@ -58,7 +58,7 @@
             <field name="active">False</field>
             <field name="description">Print product labels for validated transfer</field>
             <field name="domain">[["picking_type_code","=","incoming"]]</field>
-            <field name="report_id" eval="ref('product.report_product_template_label')"/>
+            <field name="report_id" eval="ref('stock.label_product_product')"/>
         </record>
 
         <record id="print_picking_document_after_so_confirmation_scenario" model="printnode.scenario">
@@ -80,7 +80,7 @@
             <field name="active">False</field>
             <field name="description">Print single product label when processing Incoming Shipment</field>
             <field name="domain">[["picking_type_code","=","incoming"]]</field>
-            <field name="report_id" eval="ref('product.report_product_template_label')"/>
+            <field name="report_id" eval="ref('stock.label_product_product')"/>
         </record>
 
         <record id="print_single_lot_label_on_transfer_scenario" model="printnode.scenario">

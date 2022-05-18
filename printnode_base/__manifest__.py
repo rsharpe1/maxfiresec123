@@ -7,7 +7,7 @@
         Print any reports or shipping labels directly to any local,
         Wi-Fi or Bluetooth printer without downloading PDF or ZPL!
     """,
-    'version': '15.0.2.1.9',
+    'version': '15.0.2.2.0',
     'category': 'Tools',
     "images": ["static/description/images/image1.gif"],
     'author': 'VentorTech',
@@ -49,6 +49,7 @@
         'wizard/printnode_installer_wizard.xml',
         'wizard/product_label_layout.xml',
         'wizard/printnode_attach_universal_wizard.xml',
+        'wizard/printnode_print_reports_universal_wizard.xml',
         # Model Views
         'views/printnode_release_views.xml',
         'views/printnode_account_views.xml',

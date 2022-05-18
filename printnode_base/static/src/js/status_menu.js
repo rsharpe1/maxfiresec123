@@ -1,13 +1,20 @@
 /** @odoo-module **/
 
 import ajax from 'web.ajax';
+import core from 'web.core';
 import SystrayMenu from 'web.SystrayMenu';
 import Widget from 'web.Widget';
 
 import WORKSTATION_DEVICES from './constants';
 
+const QWeb = core.qweb;
+
 var ActionMenu = Widget.extend({
     template: 'printnode_status_menu',
+
+    events: {
+        'show.bs.dropdown': '_onStatusMenuShow',
+    },
 
     init: function (parent, options) {
         this._super(parent);
@@ -39,7 +46,33 @@ var ActionMenu = Widget.extend({
             return [];
         });
 
-        // Get information about workstation devices
+        return Promise.all(
+            [limitsPromise, releasesPromise]
+        ).then(this._loadedCallback.bind(this));
+    },
+
+    _loadedCallback: function ([limits, releases]) {
+        // Process limits
+        this.limits = limits;
+
+        // Process accounts
+        this.releases = releases;
+        this.newRelease = releases.length > 0;
+
+        // Loading ended
+        this.loaded = true;
+    },
+
+    _capitalizeWords: (str) => {
+        const words = str.split(" ");
+        let capitalizedWords = words.map(w => w[0].toUpperCase() + w.substr(1))
+        return capitalizedWords.join(' ');
+    },
+
+    _onStatusMenuShow: function () {
+        /*
+        Update workstation devices each time user clicks on the status menu
+        */
         const devicesInfo = Object.fromEntries(
             WORKSTATION_DEVICES
                 .map(n => [n, localStorage.getItem('printnode_base.' + n)])  // Two elements array
@@ -52,38 +85,22 @@ var ActionMenu = Widget.extend({
             kwargs: { devices: devicesInfo }
         })
 
-        return Promise.all(
-            [limitsPromise, releasesPromise, devicesPromise]
-        ).then(this._loadedCallback.bind(this));
-    },
+        devicesPromise.then((data) => {
+            // Process workstation devices
+            const devices = WORKSTATION_DEVICES.map(
+                device => {
+                    // Remove printnode_ and _id from the of string
+                    let deviceName = device.substring(10, device.length - 3).replace(/_/g, ' ');
 
-    _loadedCallback: function ([limits, releases, devices]) {
-        // Process limits
-        this.limits = limits;
+                    // Return pairs (type, name)
+                    return [this._capitalizeWords(deviceName), data[device]];
+                }
+            );
 
-        // Process accounts
-        this.releases = releases;
-        this.newRelease = releases.length > 0;
+            const template = QWeb.render('printnode_workstation_devices', { devices: devices });
 
-        // Process workstation devices
-        this.devices = WORKSTATION_DEVICES.map(
-            device => {
-                // Remove printnode_ and _id from the of string
-                let deviceName = device.substring(10, device.length - 3).replace(/_/g, ' ');
-
-                // Return pairs (type, name)
-                return [this._capitalizeWords(deviceName), devices[device]];
-            }
-        );
-
-        // Loading ended
-        this.loaded = true;
-    },
-
-    _capitalizeWords: (str) => {
-        const words = str.split(" ");
-        let capitalizedWords = words.map(w => w[0].toUpperCase() + w.substr(1))
-        return capitalizedWords.join(' ');
+            this.$el.find('.o_printnode_status_menu_devices').html(template);
+        })
     }
 });
 

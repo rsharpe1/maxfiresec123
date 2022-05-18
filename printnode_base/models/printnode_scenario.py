@@ -108,6 +108,19 @@ class PrintNodeScenario(models.Model):
         """
         self.report_id = None
 
+    @api.onchange('active', 'action')
+    def _onchange_active(self):
+        actions = [
+            'print_product_labels_on_transfer',
+            'print_single_product_label_on_transfer',
+            'print_multiple_product_labels_on_transfer',
+        ]
+        if not self.env.company.print_labels_format and self.active and self.action.code in actions:
+            raise UserError(_(
+                'To activate and use this scenario, you need to set the value '
+                'of the "Default Product Labels Format" field in the settings!'
+            ))
+
     def edit_domain(self):
         domain_editor = self.env.ref(
             'printnode_base.printnode_scenario_domain_editor',
@@ -160,6 +173,7 @@ class PrintNodeScenario(models.Model):
                         printer, printer_bin = scenario._get_printer()
                         print_options = {'bin': printer_bin.name} if printer_bin else {}
                         printed = scenario_method(
+                            scenario=scenario,
                             report_id=scenario.report_id,
                             printer_id=printer,
                             number_of_copies=scenario.number_of_copies,
@@ -174,6 +188,7 @@ class PrintNodeScenario(models.Model):
                         printer, printer_bin = scenario._get_printer()
                         print_options = {'bin': printer_bin.name} if printer_bin else {}
                         printed = scenario_method(
+                            scenario=scenario,
                             report_id=scenario.report_id,
                             printer_id=printer,
                             number_of_copies=scenario.number_of_copies,

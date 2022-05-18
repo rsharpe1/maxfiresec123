@@ -62,7 +62,7 @@ class User(models.Model):
         store=False,
     )
 
-    printnode_workstation_scale_id = fields.Many2one(
+    printnode_workstation_scales_id = fields.Many2one(
         'printnode.scales',
         string='Default Workstation Scales',
         store=False,
@@ -79,7 +79,7 @@ class User(models.Model):
             'printnode_rule_ids',
             'printnode_workstation_printer_id',
             'printnode_workstation_label_printer_id',
-            'printnode_workstation_scale_id',
+            'printnode_workstation_scales_id',
         ]
 
         return super().SELF_READABLE_FIELDS + readable_fields
@@ -94,7 +94,7 @@ class User(models.Model):
             'user_label_printer',
             'printnode_workstation_printer_id',
             'printnode_workstation_label_printer_id',
-            'printnode_workstation_scale_id',
+            'printnode_workstation_scales_id',
         ]
 
         return super().SELF_WRITEABLE_FIELDS + writable_fields
@@ -102,7 +102,7 @@ class User(models.Model):
     def read(self, fields=None, load='_classic_read'):
         # Add information about workstation printers (if presented)
         for workstation_device_name in WORKSTATION_DEVICES.keys():
-            if workstation_device_name not in fields:
+            if fields and workstation_device_name not in fields:
                 # No need to return the workstation fields values
                 continue
 
