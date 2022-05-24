@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="max_report_saleorder_document" inherit_id="sale.report_saleorder_document" name="Maxfire Sale Order Document ">
+        <xpath expr="//t[@t-set='display_discount']" position="after">
+            <p t-field="doc.lines_note"/>
+        </xpath>
+    </template>
+
+    <template id="max_sale_order_portal_content" inherit_id="sale.sale_order_portal_content" name="Maxfire Portal Content">
+        <xpath expr="//t[@t-set='display_discount']" position="after">
+            <p t-field="sale_order.lines_note"/>
+        </xpath>
+    </template>
+</odoo>
