@@ -16,12 +16,13 @@
     "version": '15.0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale'],
+    'depends': ['base', 'sale', 'sale_management'],
 
     # always loaded
     'data': [
         'views/sale_views.xml',
         'report/sale_report_templates.xml',
+        'views/sale_order_template_views.xml',
     ],
 
 }
