@@ -49,6 +49,7 @@
         'wizard/printnode_installer_wizard.xml',
         'wizard/product_label_layout.xml',
         'wizard/printnode_attach_universal_wizard.xml',
+        'wizard/printnode_print_reports_universal_wizard.xml',
         # Model Views
         'views/printnode_release_views.xml',
         'views/printnode_account_views.xml',

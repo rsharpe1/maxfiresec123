@@ -46,4 +46,4 @@ class IrAttachment(models.Model):
             message, job_ids = self.dpc_print()
             return {"status": True, "job_ids": job_ids, "message": message}
         except UserError as exc:
-            return {"success": False, "job_ids": [], "message": str(exc)}
+            return {"status": False, "job_ids": [], "message": str(exc)}

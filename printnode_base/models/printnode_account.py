@@ -244,12 +244,12 @@ class PrintNodeAccount(models.Model):
 
         if existing_scales:
             existing_scales.write({
-                'device_name': scales['deviceName'],
+                'name': scales['deviceName'],
                 'status': 'online',
             })
         else:
             scales_vals = {
-                'device_name': scales['deviceName'],
+                'name': scales['deviceName'],
                 'device_num': scales['deviceNum'],
                 'printnode_id': scales['productId'],
                 'computer_id': odoo_computer.id,
@@ -435,7 +435,7 @@ class PrintNodeAccount(models.Model):
             # Deactivate printers only from current account
             self._deactivate_printers()
 
-            self.status = resp.json().get('message') or e
+            self.status = e
 
         return None
 
@@ -466,7 +466,7 @@ class PrintNodeAccount(models.Model):
         except requests.exceptions.RequestException as e:
             self._deactivate_printers()
 
-            self.status = resp.json().get('message') or e
+            self.status = e
         except JSONDecodeError as e:
             self._deactivate_printers()
 

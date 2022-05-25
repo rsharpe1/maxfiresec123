@@ -3,6 +3,7 @@
 
 from odoo import fields, models
 
+
 REPORT_DOMAIN = [
     '|', ('model', '=', 'product.product'), ('model', '=', 'product.template'),
     ('report_type', 'in', ['qweb-pdf', 'qweb-text', 'py3o']),
@@ -22,6 +23,19 @@ class Company(models.Model):
         'printnode.printer',
         string='Printer',
     )
+
+    print_labels_format = fields.Selection(
+        [
+            ('dymo', 'Dymo'),
+            ('2x7xprice', '2 x 7 with price'),
+            ('4x7xprice', '4 x 7 with price'),
+            ('4x12', '4 x 12'),
+            ('4x12xprice', '4 x 12 with price'),
+            ('zpl', 'ZPL Labels'),
+            ('zplxprice', 'ZPL Labels with price')
+        ],
+        string="Default Product Labels Format",
+        help='Set default label printing format')
 
     printnode_recheck = fields.Boolean(
         string='Mandatory check Printing Status',

@@ -18,6 +18,11 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.printnode_printer',
     )
 
+    print_labels_format = fields.Selection(
+        readonly=False,
+        related='company_id.print_labels_format',
+    )
+
     printnode_recheck = fields.Boolean(
         readonly=False,
         related='company_id.printnode_recheck',

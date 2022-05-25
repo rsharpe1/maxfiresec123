@@ -105,6 +105,9 @@
                                             <button name="%(printnode_base.printnode_policy_report)d" type="action" class="btn-link" icon="fa-arrow-right" string="Define Report Settings" />
                                         </div>
                                     </div>
+                                    <div class="text-muted">
+                                        Other Settings
+                                    </div>
                                 </div>
                             </div>
 
@@ -176,6 +179,19 @@
                                         avoiding standard Odoo mechanisms. This checkbox helps you to workaround
                                         this problem. If enabled, it will try to search for latest attachments in
                                         Delivery Order with the same Creation Date and will send them to the printer.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <label for="print_labels_format" />
+                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
+                                    <br />
+                                    <field name="print_labels_format" class="oe_inline" />
+                                    <div class="text-muted">
+                                        This option sets the default product label format for printing
+                                        product labels using print scenarios. If this field is blank,
+                                        then the user will not be able to use scenarios for print product labels.
                                     </div>
                                 </div>
                             </div>

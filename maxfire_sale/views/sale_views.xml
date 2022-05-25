@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="max_inherit_view_order_form" model="ir.ui.view">
+        <field name="name">max.inherit.view_order_form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="order_lines_note" string="Order Lines Note">
+                    <group name="note_group"  class="mt-2 mt-md-0">
+                        <group colspan="4">
+                            <field name="lines_note" class="oe-bordered-editor" nolabel="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
