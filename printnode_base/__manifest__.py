@@ -7,7 +7,7 @@
         Print any reports or shipping labels directly to any local,
         Wi-Fi or Bluetooth printer without downloading PDF or ZPL!
     """,
-    'version': '15.0.2.2.0',
+    'version': '15.0.2.3.0',
     'category': 'Tools',
     "images": ["static/description/images/image1.gif"],
     'author': 'VentorTech',

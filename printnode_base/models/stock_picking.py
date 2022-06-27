@@ -1,6 +1,7 @@
 # Copyright 2021 VentorTech OU
 # See LICENSE file for full copyright and licensing details.
 
+from collections import defaultdict
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
@@ -50,13 +51,18 @@ class StockPicking(models.Model):
             # Print product labels
             self.print_scenarios(action='print_product_labels_on_transfer')
 
+            # Print lot labels
+            self.print_scenarios(action='print_single_lot_labels_on_transfer_after_validation')
+            self.print_scenarios(action='print_multiple_lot_labels_on_transfer_after_validation')
+
             # Print packages
             self.print_scenarios(action='print_packages_label_on_transfer')
 
         return res
 
     def cancel_shipment(self):
-        """ Redefining a standard method
+        """
+        Redefining a standard method
         """
         for stock_pick in self:
             shipping_label = stock_pick.shipping_label_ids.filtered(
@@ -102,8 +108,8 @@ class StockPicking(models.Model):
                                       ' Label" checkbox in PrintNode/Configuration/Settings'))
 
         if auto_print:
-            # Expected UserError if there is no shipping label printer is available.
-            user.get_shipping_label_printer()
+            # Simple check if shipping printer set, raise exception if no shipping printer found
+            user.get_shipping_label_printer(self.carrier_id, raise_exc=True)
 
         super(StockPicking, self).send_to_shipper()
 
@@ -145,7 +151,7 @@ class StockPicking(models.Model):
         domain.append(('create_date', '=', attachment.create_date))
         last_attachments = self.env['ir.attachment'].search(domain)
 
-        printer = self.env.user.get_shipping_label_printer()
+        printer = self.env.user.get_shipping_label_printer(self.carrier_id, raise_exc=True)
 
         for doc in last_attachments:
             params = {
@@ -211,241 +217,141 @@ class StockPicking(models.Model):
         }
         self.env['shipping.label'].create(shipping_label_vals)
 
-    def _get_product_lines_from_stock_move(self):
-        product_lines = []
-
-        unit_uom = self.env.ref('uom.product_uom_unit')
-        for move_line in self.move_lines:
-            if move_line.quantity_done > 0:
-                product_lines.append((0, 0, {
-                    'product_id': move_line.product_id.id,
-                    'quantity': (move_line.quantity_done
-                                 if move_line.product_uom == unit_uom else 1),
-                }))
-        return product_lines
-
-    def _scenario_print_product_labels_on_transfer(
-        self, scenario, report_id, printer_id, number_of_copies=1, **kwargs
+    def _scenario_print_single_lot_labels_on_transfer_after_validation(
+        self, scenario, number_of_copies=1, **kwargs
     ):
         """
+        Print single lot label for each move line (after validation)
         Special method to provide custom logic of printing
-        (like printing labels through wizards).
-
-        If you need to just print a report - check scenarios.
+        (like printing labels through wizards)
         """
-        print_options = kwargs.get('options', {})
 
-        # In Odoo 15 there is a wizard to print labels, so we have to use it to avoid overriding
-        # a lot of logic related to label format selection / printer selection / etc.
-        wizard = self.env['product.label.layout'].create({
-            'active_model': 'product.product',
-            'picking_quantity': 'custom_per_product',
-            'product_ids': self.move_lines.mapped('product_id'),
-            'product_line_ids': self._get_product_lines_from_stock_move(),
-            'print_format': self.env.company.print_labels_format,
-        })
+        printed = self._scenario_print_single_lot_label_on_transfer(
+            scenario=scenario,
+            number_of_copies=number_of_copies,
+            **kwargs
+        )
 
-        # Printer from scenario should be used if it is set, otherwise use the default printer
-        # from 'product.label.layout' wizard
-        if scenario.printer_id:
-            printer_id = scenario.printer_id
-        else:
-            # Manually call default method for printer_id to update printer based on
-            # other wizard fields values
-            printer_id, printer_bin = wizard._get_default_printer()
-            # We also should replace printer bin to the value
-            if printer_bin:
-                print_options['bin'] = printer_bin.name
+        return printed
 
-        # Get report
-        xml_id, data = wizard._prepare_report_data()
-        report_id = self.env.ref(xml_id)
+    def _scenario_print_multiple_lot_labels_on_transfer_after_validation(
+        self, scenario, number_of_copies=1, **kwargs
+    ):
+        """
+        Print multiple lot labels (depends on quantity) for each move line (after validation)
+        Special method to provide custom logic of printing
+        (like printing labels through wizards)
+        """
 
-        printed = printer_id.printnode_print(
-            report_id=report_id,
-            objects=self.move_lines.product_id,
-            data=data,
-            copies=number_of_copies,
-            options=print_options,
+        printed = self._scenario_print_multiple_lot_labels_on_transfer(
+            scenario=scenario,
+            number_of_copies=number_of_copies,
+            **kwargs
         )
 
         return printed
 
     def _scenario_print_single_lot_label_on_transfer(
-        self, report_id, printer_id, number_of_copies=1, **kwargs
-    ):
-        """
-        Print single lot label for each move line
-        """
-        new_move_lines = kwargs.get('new_move_lines')
-        print_options = kwargs.get('options', {})
-        move_lines_with_lots_and_qty_done = new_move_lines.filtered(
-            lambda ml: ml.lot_id and not ml.printnode_printed and ml.qty_done > 0)
-
-        printed = False
-
-        for move_line in move_lines_with_lots_and_qty_done:
-            if move_line.lot_id:
-                printer_id.printnode_print(
-                    report_id,
-                    move_line.lot_id,
-                    copies=number_of_copies,
-                    options=print_options,
-                )
-
-                move_line.write({'printnode_printed': True})
-                printed = True
-
-        return printed
-
-    def _scenario_print_multiple_lot_labels_on_transfer(
-        self, report_id, printer_id, number_of_copies=1, **kwargs
-    ):
-        """
-        Print multiple lot labels (depends on quantity) for each move line
-        """
-        new_move_lines = kwargs.get('new_move_lines')
-        print_options = kwargs.get('options', {})
-        move_lines_with_lots_and_qty_done = new_move_lines.filtered(
-            lambda ml: ml.lot_id and not ml.printnode_printed and ml.qty_done > 0)
-
-        printed = False
-
-        for move_line in move_lines_with_lots_and_qty_done:
-            lots = self.env['stock.production.lot']
-
-            for i in range(int(move_line.qty_done)):
-                lots = lots.concat(move_line.lot_id)
-
-            if lots:
-                printer_id.printnode_print(
-                    report_id,
-                    lots,
-                    copies=number_of_copies,
-                    options=print_options,
-                )
-
-                move_line.write({'printnode_printed': True})
-                printed = True
-
-        return printed
-
-    def _get_product_lines_from_stock_move_lines(self, move_lines, with_qty=False):
-        product_lines = []
-
-        unit_uom = self.env.ref('uom.product_uom_unit')
-        for move_line in move_lines:
-            qty_done = 1
-            if move_line.product_uom_id == unit_uom and with_qty:
-                qty_done = move_line.qty_done
-
-            if not move_line.printnode_printed and move_line.qty_done > 0:
-                product_lines.append((0, 0, {
-                    'product_id': move_line.product_id.id,
-                    'quantity': qty_done,
-                }))
-
-        return product_lines
-
-    def _scenario_print_single_product_label_on_transfer(
         self, scenario, report_id, printer_id, number_of_copies=1, **kwargs
     ):
-        """Print single product label for each move line"""
-
-        new_move_lines = kwargs.get('new_move_lines')
+        """
+        Print single lot label for each move line (real time)
+        Special method to provide custom logic of printing
+        (like printing labels through wizards)
+        """
+        new_move_lines = kwargs.get('new_move_lines', self.move_line_ids)
         print_options = kwargs.get('options', {})
 
-        product_ids = self.move_lines.filtered(lambda ml: ml.quantity_done > 0).mapped('product_id')
+        return self._print_lot_labels_report(
+            new_move_lines,
+            report_id,
+            printer_id,
+            with_qty=False,
+            copies=number_of_copies,
+            options=print_options)
 
-        if not product_ids:
-            # Print nothing when no move lines where product with quantity_done > 0
+    def _scenario_print_multiple_lot_labels_on_transfer(
+        self, scenario, report_id, printer_id, number_of_copies=1, **kwargs
+    ):
+        """
+        Print multiple lot labels (depends on quantity) for each move line (real time)
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+        new_move_lines = kwargs.get('new_move_lines', self.move_line_ids)
+        print_options = kwargs.get('options', {})
+
+        return self._print_lot_labels_report(
+            new_move_lines,
+            report_id,
+            printer_id,
+            with_qty=True,
+            copies=number_of_copies,
+            options=print_options)
+
+    def _scenario_print_product_labels_on_transfer(
+            self, scenario, number_of_copies=1, **kwargs
+    ):
+        """
+        Print multiple product labels (depends on quantity) for each move line (after validation)
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+        printed = self._scenario_print_multiple_product_labels_on_transfer(
+            scenario=scenario,
+            number_of_copies=number_of_copies,
+            **kwargs
+        )
+
+        return printed
+
+    def _scenario_print_single_product_label_on_transfer(
+        self, scenario, number_of_copies=1, **kwargs
+    ):
+        """
+        Print single product label for each move line (real time)
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+        prepared_data = self._prepare_data_for_scenarios_to_print_product_labels(
+            scenario,
+            move_lines=self.move_lines,
+            **kwargs,
+        )
+
+        if not prepared_data:
             return False
 
-        # In Odoo 15 there is a wizard to print labels, so we have to use it to avoid overriding
-        # a lot of logic related to label format selection / printer selection / etc.
-        wizard = self.env['product.label.layout'].create({
-            'active_model': 'product.product',
-            'picking_quantity': 'custom_per_product',
-            'product_ids': product_ids,
-            'product_line_ids': self._get_product_lines_from_stock_move_lines(new_move_lines),
-            'print_format': self.env.company.print_labels_format,
-        })
-
-        # Printer from scenario should be used if it is set, otherwise use the default printer
-        # from 'product.label.layout' wizard
-        if scenario.printer_id:
-            printer_id = scenario.printer_id
-        else:
-            # Manually call default method for printer_id to update printer based on
-            # other wizard fields values
-            printer_id, printer_bin = wizard._get_default_printer()
-            # We also should replace printer bin to the value
-            if printer_bin:
-                print_options['bin'] = printer_bin.name
-
-        # Get report
-        xml_id, data = wizard._prepare_report_data()
-        report_id = self.env.ref(xml_id)
-
-        printed = printer_id.printnode_print(
-            report_id=report_id,
-            objects=self.move_lines.product_id,
-            data=data,
+        printed = prepared_data.get('printer_id').printnode_print(
+            report_id=prepared_data.get('report_id'),
+            objects=prepared_data.get('product_ids'),
+            data=prepared_data.get('data'),
             copies=number_of_copies,
-            options=print_options,
+            options=prepared_data.get('print_options', {}),
         )
 
         return printed
 
     def _scenario_print_multiple_product_labels_on_transfer(
-        self, scenario, report_id, printer_id, number_of_copies=1, **kwargs
+        self, scenario, number_of_copies=1, **kwargs
     ):
-        """Print multiple product labels for each move line"""
+        """
+        Print multiple product labels for each move line (real time)
+        Special method to provide custom logic of printing (like printing labels through wizards)
+        """
+        prepared_data = self._prepare_data_for_scenarios_to_print_product_labels(
+            scenario,
+            move_lines=self.move_lines,
+            with_qty=True,
+            **kwargs,
+        )
 
-        new_move_lines = kwargs.get('new_move_lines')
-        print_options = kwargs.get('options', {})
-
-        product_ids = self.move_lines.filtered(lambda ml: ml.quantity_done > 0).mapped('product_id')
-
-        if not product_ids:
-            # Print nothing when no move lines where product with quantity_done > 0
+        if not prepared_data:
             return False
 
-        # In Odoo 15 there is a wizard to print labels, so we have to use it to avoid overriding
-        # a lot of logic related to label format selection / printer selection / etc.
-        wizard = self.env['product.label.layout'].create({
-            'active_model': 'product.product',
-            'picking_quantity': 'custom_per_product',
-            'product_ids': product_ids,
-            'product_line_ids': self._get_product_lines_from_stock_move_lines(
-                new_move_lines,
-                with_qty=True
-            ),
-            'print_format': self.env.company.print_labels_format,
-        })
-
-        # Printer from scenario should be used if it is set, otherwise use the default printer
-        # from 'product.label.layout' wizard
-        if scenario.printer_id:
-            printer_id = scenario.printer_id
-        else:
-            # Manually call default method for printer_id to update printer based on
-            # other wizard fields values
-            printer_id, printer_bin = wizard._get_default_printer()
-            # We also should replace printer bin to the value
-            if printer_bin:
-                print_options['bin'] = printer_bin.name
-
-        # Get report
-        xml_id, data = wizard._prepare_report_data()
-        report_id = self.env.ref(xml_id)
-
-        printed = printer_id.printnode_print(
-            report_id=report_id,
-            objects=self.move_lines.product_id,
-            data=data,
+        printed = prepared_data.get('printer_id').printnode_print(
+            report_id=prepared_data.get('report_id'),
+            objects=prepared_data.get('product_ids'),
+            data=prepared_data.get('data'),
             copies=number_of_copies,
-            options=print_options,
+            options=prepared_data.get('print_options', {}),
         )
 
         return printed
@@ -490,3 +396,161 @@ class StockPicking(models.Model):
             copies=number_of_copies,
             options=print_options,
         )
+
+    def _change_number_of_lot_labels_to_one(self, custom_barcodes):
+        """
+        This method changes barcodes quantities to 1.
+        Example of incoming data:
+            defaultdict(<class 'list'>, {36: [('0002', 3), ('0003', 6)]})
+
+        Return data example:
+            defaultdict(<class 'list'>, {36: [('0002', 1), ('0003', 1)]})
+        """
+        new_custom_barcodes = defaultdict(list)
+        for key, val in custom_barcodes.items():
+            for code, qty in val:
+                new_custom_barcodes[key].append((code, 1))
+
+        return new_custom_barcodes
+
+    def _get_product_lines_from_stock_moves(self, move_lines, **kwargs):
+        """
+        This method returns product_lines with product_id and quantity from stock_move.
+        """
+        product_lines = []
+        unit_uom = self.env.ref('uom.product_uom_unit')
+
+        move_lines_with_qty_done = move_lines.filtered(lambda ml: ml.quantity_done > 0)
+
+        for move_line in move_lines_with_qty_done:
+            quantity_done = 1
+            if move_line.product_uom == unit_uom:
+                quantity_done = move_line.quantity_done
+
+            product_lines.append((0, 0, {
+                'product_id': move_line.product_id.id,
+                'quantity': quantity_done,
+            }))
+
+        return product_lines
+
+    def _get_product_lines_from_stock_move_lines(self, move_lines, **kwargs):
+        """This method returns product_lines with product_id and quantity from stock_move_lines.
+        """
+        product_lines = []
+        unit_uom = self.env.ref('uom.product_uom_unit')
+
+        move_lines_with_lots_and_qty_done = move_lines.filtered(
+            lambda ml: ml.qty_done > 0 and (ml.lot_id or ml.lot_name)
+        )
+        for move_line in move_lines_with_lots_and_qty_done:
+            quantity_done = 1
+            if move_line.product_uom_id == unit_uom:
+                quantity_done = move_line.qty_done
+
+            product_lines.append((0, 0, {
+                'product_id': move_line.product_id.id,
+                'quantity': quantity_done,
+            }))
+
+        return product_lines
+
+    def _print_lot_labels_report(
+        self, new_move_lines, report_id, printer_id,
+        with_qty=False, copies=1, options=None
+    ):
+        """
+        This method runs printing of lots labels. It can print single lot label for each lot or
+        quantity based on qty_done attribute
+        """
+        move_lines_with_lots_and_qty_done = new_move_lines.filtered(
+            lambda ml: ml.lot_id and not ml.printnode_printed and ml.qty_done > 0)
+
+        printed = False
+
+        for move_line in move_lines_with_lots_and_qty_done:
+            lots = self.env['stock.production.lot']
+
+            if with_qty:
+                for i in range(int(move_line.qty_done)):
+                    lots = lots.concat(move_line.lot_id)
+            else:
+                lots = lots.concat(move_line.lot_id)
+
+            if lots:
+                printer_id.printnode_print(
+                    report_id,
+                    lots,
+                    copies=copies,
+                    options=options,
+                )
+
+                move_line.write({'printnode_printed': True})
+                printed = True
+
+        return printed
+
+    def _prepare_data_for_scenarios_to_print_product_labels(
+        self, scenario, move_lines=None, with_qty=False, **kwargs,
+    ):
+        """
+        This method prepares data to print product labels (using odoo Print Labels wizard)
+
+        :param scenario: required current scenario
+        :param move_lines: required stock moves from stock picking
+        :param with_qty: optional boolean to change the picking_quantity mode of wizard
+        """
+        product_lines = self._get_product_lines_from_stock_moves(move_lines=move_lines)
+
+        move_lines_with_qty_done = move_lines.filtered(lambda ml: ml.quantity_done > 0)
+
+        product_ids = move_lines_with_qty_done.mapped('product_id')
+
+        if not product_ids:
+            # Print nothing when no move lines where product with quantity_done > 0
+            return False
+
+        # In Odoo 15 there is a wizard to print labels, so we have to use it to avoid overriding
+        # a lot of logic related to label format selection / printer selection / etc.
+        wizard = self.env['product.label.layout'].create({
+            'active_model': 'product.product',
+            'picking_quantity': 'custom_per_product' if with_qty else 'custom',
+            'product_ids': product_ids,
+            'product_line_ids': product_lines,
+            'print_format': self.env.company.print_labels_format,
+        })
+
+        printing_data = self._prepare_printing_data(scenario, wizard, **kwargs)
+        printing_data['product_ids'] = product_ids
+
+        return printing_data
+
+    def _prepare_printing_data(self, scenario, wizard, **kwargs):
+        """
+        This method prepares all data required for scenarios to print something using Print Labels
+        wizard (wizard parameter)
+        """
+        print_options = kwargs.get('options', {})
+
+        # Printer from scenario should be used if it is set, otherwise use the default printer
+        # from 'product.label.layout' wizard
+        if scenario.printer_id:
+            printer_id = scenario.printer_id
+        else:
+            # Manually call default method for printer_id to update printer based on
+            # other wizard fields values
+            printer_id, printer_bin = wizard._get_default_printer()
+            # We also should replace printer bin to the value
+            if printer_bin:
+                print_options['bin'] = printer_bin.name
+
+        # Get report
+        xml_id, data = wizard._prepare_report_data()
+        report_id = self.env.ref(xml_id)
+
+        return {
+            'printer_id': printer_id,
+            'report_id': report_id,
+            'data': data,
+            'print_options': print_options,
+        }

@@ -89,12 +89,14 @@ class ShippingLabel(models.Model):
 
     def print_via_printnode(self):
         user = self.env.user
-        printer = user.get_shipping_label_printer()
 
         for shipping_label in self:
+            printer = user.get_shipping_label_printer(shipping_label.carrier_id, raise_exc=True)
+
             attachment_list = shipping_label._get_attachment_list()
             if not attachment_list:
                 continue
+
             for ascii_data, params in attachment_list:
                 printer.printnode_print_b64(ascii_data, params)
                 if params.get('package_id') and self.env.company.print_package_with_label:
@@ -104,4 +106,5 @@ class ShippingLabel(models.Model):
                             'There are no available package report for printing, please, '
                             'define "Package Report to Print" in Direct Print / Settings menu'
                         ))
+
                     printer.printnode_print(report_id, params.get('package_id'))

@@ -418,7 +418,8 @@ class PrintNodeAccount(models.Model):
             if resp.status_code not in (200, 403):
                 resp.raise_for_status()
 
-            self.status = 'OK'
+            if self.status != 'OK':
+                self.status = 'OK'
 
             json_response = resp.json()
 
@@ -457,7 +458,8 @@ class PrintNodeAccount(models.Model):
         try:
             resp = methods[method]('{}/{}'.format(dpc_url, uri), **kwargs)
 
-            self.status = 'OK'
+            if self.status != 'OK':
+                self.status = 'OK'
             return resp.json()
         except requests.exceptions.ConnectionError as e:
             self._deactivate_printers()

@@ -13,26 +13,81 @@ class TestPrintNodeUsers(TestPrintNodeCommon):
     Tests of User model methods
     """
 
+    def setUp(self):
+        super(TestPrintNodeUsers, self).setUp()
+
+        self.printnode_workstation_label_printer = self.env['printnode.printer'].create({
+            'name': 'Printnode Workstation Label Printer',
+            'status': 'online',
+            'computer_id': self.computer.id,
+        })
+
     def test_get_shipping_label_printer(self):
         """
-        Test for the correct assignment of shipping label printer for user
+        Test for the correct selection of Shipping Label Printer
         """
+        user = self.env.user
+        company = self.env.company
 
+        # Test Case - 1
+        # No printer is assigned
+        # 1.1 Expected to raise UserError with raise_exc=True
         with self.assertRaises(UserError):
-            self.user.get_shipping_label_printer()
+            self.user.get_shipping_label_printer(raise_exc=True)
 
-        self.user.user_label_printer = self.printer
-        test_printer = self.user.get_shipping_label_printer()
-        self.assertEqual(self.printer.id, test_printer.id, "Wrong get shipping label printer")
+        # 1.2 Expected to return None without raise_exc=True
+        self.assertFalse(self.user.get_shipping_label_printer())
 
-        self.user.user_label_printer = None
+        # Test Case - 2
+        # Only Company Label Printer is defined
+        # It is expected to be selected
+        company.company_label_printer = self.company_printer
 
-        with self.assertRaises(UserError):
-            self.user.get_shipping_label_printer()
+        printer = user.get_shipping_label_printer(self.delivery_carrier)
+        self.assertEqual(printer, company.company_label_printer)
 
-        self.env.company.company_label_printer = self.printer
-        test_printer = self.user.with_env(self.env).get_shipping_label_printer()
-        self.assertEqual(self.printer.id, test_printer.id, "Wrong get shipping label printer")
+        # Test Case - 3
+        # Company Label Printer is defined
+        # Delivery Carrier Printer is defined
+        # Delivery Carrier Printer is expected to be selected
+        self.delivery_carrier.printer_id = self.printer.id
+
+        # The carrier_id parameter was not passed
+        printer = user.get_shipping_label_printer()
+        self.assertNotEqual(printer, self.delivery_carrier.printer_id)
+
+        # The carrier_id parameter must be passed
+        printer = user.get_shipping_label_printer(self.delivery_carrier)
+        self.assertEqual(printer, self.delivery_carrier.printer_id)
+        self.assertIsNotNone(company.company_label_printer.id)
+
+        # Test Case - 4
+        # Company Label Printer is defined
+        # Delivery Carrier Printer is defined
+        # Shipping Label Printer for current user is defined
+        # Shipping Label Printer for current user is expected to be selected
+        user.user_label_printer = self.user_printer.id
+
+        printer = user.get_shipping_label_printer(self.delivery_carrier)
+        self.assertEqual(printer, user.user_label_printer)
+        self.assertIsNotNone(company.company_label_printer.id)
+        self.assertIsNotNone(self.delivery_carrier.printer_id.id)
+
+        # Test Case - 5
+        # All printers are defined
+        # The Workstation Label Printer is expected to be selected
+        new_context = self.env.context.copy()
+        workstation_devices = {
+            'printnode_workstation_label_printer_id': self.printnode_workstation_label_printer.id
+        }
+        new_context.update(workstation_devices)
+
+        printer = user.with_context(new_context).get_shipping_label_printer(
+            self.delivery_carrier)
+        self.assertEqual(printer, self.printnode_workstation_label_printer)
+        self.assertIsNotNone(company.company_label_printer.id)
+        self.assertIsNotNone(self.delivery_carrier.printer_id.id)
+        self.assertIsNotNone(user.user_label_printer.id)
 
     def test_get_scales(self):
         """
@@ -58,6 +113,7 @@ class TestPrintNodeUsers(TestPrintNodeCommon):
 
         company_printer = self.company_printer
         user_printer = self.user_printer
+
         self.company.write({'printnode_printer': company_printer.id})
         self.user.write({'printnode_printer': user_printer.id})
 
@@ -75,6 +131,17 @@ class TestPrintNodeUsers(TestPrintNodeCommon):
         self.user.write({'printnode_printer': False})
         printer, printer_bin = self.user.get_report_printer(self.so_report.id)
         self.assertEqual(printer.id, self.company.printnode_printer.id)
+
+        # Expected Workstation Printer
+        new_ctx = self.env.context.copy()
+        new_ctx.update({
+            'printnode_workstation_printer_id': self.printnode_workstation_label_printer.id
+        })
+
+        printer, printer_bin = self.user.with_context(new_ctx).get_report_printer(
+            self.so_report.id
+        )
+        self.assertEqual(printer, self.printnode_workstation_label_printer)
 
     def test_get_workstation_device(self):
         """

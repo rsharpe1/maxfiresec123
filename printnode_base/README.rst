@@ -7,6 +7,15 @@ Change Log
 
 |
 
+* 2.3.0 (2022-06-20)
+    - NEW! Added possibility to set number of copies for specific record in Print Report / Print Attachments wizards
+    - NEW! Added new scenarios: Print single / multiple lot label on Transfer (after validation)
+    - NEW! Added possibility to define printer for delivery carriers
+    - Fixed issue with duplicated printjobs (under heavy load)
+    - Fixed issue with ignored workstation printers when printing through Action menu (Odoo 15)
+    - Fixed issues with Odoo JS tests (related to workstation devices feature)
+    - After module upgrade print wizards are no longer deleted
+
 * 2.2.0 (2022-05-16)
     - NEW! Added functionality to mass print lot labels (from list of Lots/Serial Numbers)
     - NEW! Allow to add new Print Report action to any model (through Configure Print Wizard menu)

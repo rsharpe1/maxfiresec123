@@ -104,7 +104,9 @@ class PrintnodeMapActionServer(models.Model):
         # Attach ir.model.data record to new action
         self.env['ir.model.data']._update_xmlids([{
             'xml_id': f'printnode_base.printnode_ir_actions_server_{action_server.id}',
-            'record': action_server
+            'record': action_server,
+            # Make it no updatable to avoid deletion on module upgrade
+            'noupdate': True,
         }])
 
         rec.write({'action_server_id': action_server.id})

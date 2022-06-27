@@ -34,7 +34,7 @@ class DataSetProxy(DataSet):
             if not objects:
                 continue
             printer, printer_bin = action._get_action_printer()
-            options = {'bin': printer_bin} if printer_bin else {}
+            options = {'bin': printer_bin.name} if printer_bin else {}
             printer.printnode_print(
                 action.report_id,
                 objects,

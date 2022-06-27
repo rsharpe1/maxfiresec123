@@ -114,6 +114,9 @@ class PrintNodeScenario(models.Model):
             'print_product_labels_on_transfer',
             'print_single_product_label_on_transfer',
             'print_multiple_product_labels_on_transfer',
+            'print_lot_labels_on_transfer',
+            'print_single_lot_label_on_transfer',
+            'print_multiple_lot_labels_on_transfer',
         ]
         if not self.env.company.print_labels_format and self.active and self.action.code in actions:
             raise UserError(_(

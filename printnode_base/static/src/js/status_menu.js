@@ -1,38 +1,32 @@
 /** @odoo-module **/
 
 import ajax from 'web.ajax';
-import core from 'web.core';
-import SystrayMenu from 'web.SystrayMenu';
-import Widget from 'web.Widget';
+import rpc from 'web.rpc';
+
+import { registry } from '@web/core/registry';
 
 import WORKSTATION_DEVICES from './constants';
 
-const QWeb = core.qweb;
+const systrayRegistry = registry.category('systray');
 
-var ActionMenu = Widget.extend({
-    template: 'printnode_status_menu',
+export class PrintnodeStatusMenu extends owl.Component {
+    setup() {
+        this.state = owl.useState({
+            limits: [],
+            devices: [],
+            releases: [],
+            newRelease: false,
+        });
 
-    events: {
-        'show.bs.dropdown': '_onStatusMenuShow',
-    },
-
-    init: function (parent, options) {
-        this._super(parent);
-
-        this.limits = [];
-        this.releases = [];
-        this.newRelease = false;
-        this.loaded = false;
-    },
-
-    willStart: function () {
         // Rate Us URL
         let odooVersion = odoo.info.server_version;
         // This attribute can include some additional symbols we do not need here (like 12.0e+)
         odooVersion = odooVersion.substring(0, 4);
         this.rateUsURL = `https://apps.odoo.com/apps/modules/${odooVersion}/printnode_base/#ratings`;
+    }
 
-        const limitsPromise = this._rpc({ model: 'printnode.account', method: 'get_limits' });
+    async willStart() {
+        const limitsPromise = rpc.query({ model: 'printnode.account', method: 'get_limits' });
 
         // Check if model with releases already exists 
         const releasesPromise = ajax.post("/dpc/release-model-check").then((data) => {
@@ -40,7 +34,7 @@ var ActionMenu = Widget.extend({
 
             // If model exists load releases
             if (status) {
-                return this._rpc({ model: 'printnode.release', method: 'search_read' });
+                return rpc.query({ model: 'printnode.release', method: 'search_read' });
             }
             // If not exist return empty array
             return [];
@@ -49,41 +43,41 @@ var ActionMenu = Widget.extend({
         return Promise.all(
             [limitsPromise, releasesPromise]
         ).then(this._loadedCallback.bind(this));
-    },
+    }
 
-    _loadedCallback: function ([limits, releases]) {
+    _loadedCallback([limits, releases]) {
         // Process limits
-        this.limits = limits;
+        this.state.limits = limits;
 
         // Process accounts
-        this.releases = releases;
-        this.newRelease = releases.length > 0;
+        this.state.releases = releases;
+        this.state.newRelease = releases.length > 0;
+    }
 
-        // Loading ended
-        this.loaded = true;
-    },
-
-    _capitalizeWords: (str) => {
+    _capitalizeWords(str) {
         const words = str.split(" ");
-        let capitalizedWords = words.map(w => w[0].toUpperCase() + w.substr(1))
+        let capitalizedWords = words.map(w => w[0].toUpperCase() + w.substr(1));
         return capitalizedWords.join(' ');
-    },
+    }
 
-    _onStatusMenuShow: function () {
+    _onStatusMenuShow() {
         /*
         Update workstation devices each time user clicks on the status menu
         */
+        // Clean old information about workstation devices
+        this.state.devices = [];
+
         const devicesInfo = Object.fromEntries(
             WORKSTATION_DEVICES
                 .map(n => [n, localStorage.getItem('printnode_base.' + n)])  // Two elements array
                 .filter(i => i[1]) // Skip empty values
         );
 
-        const devicesPromise = this._rpc({
+        const devicesPromise = rpc.query({
             model: 'res.users',
             method: 'validate_device_id',
             kwargs: { devices: devicesInfo }
-        })
+        });
 
         devicesPromise.then((data) => {
             // Process workstation devices
@@ -97,13 +91,16 @@ var ActionMenu = Widget.extend({
                 }
             );
 
-            const template = QWeb.render('printnode_workstation_devices', { devices: devices });
-
-            this.$el.find('.o_printnode_status_menu_devices').html(template);
-        })
+            this.state.devices = devices;
+        });
     }
+}
+
+Object.assign(PrintnodeStatusMenu, {
+    props: {},
+    template: 'printnode_base.StatusMenu',
 });
 
-SystrayMenu.Items.push(ActionMenu);
-
-export { ActionMenu };
+systrayRegistry.add('printnode_base.StatusMenu', {
+    Component: PrintnodeStatusMenu,
+});

@@ -115,12 +115,13 @@ class User(models.Model):
 
         return data
 
-    def get_shipping_label_printer(self):
+    def get_shipping_label_printer(self, carrier_id=None, raise_exc=False):
         """
         Printer search sequence:
-        1. Default Workstation Printer (User preferences)
-        2. Default printer for current user (User Preferences)
-        3. Default printer for current company (Settings)
+        1. Default Workstation Shipping Label Printer (User preferences)
+        2. Default Shipping Label Printer for current user (User Preferences)
+        3. Default Delivery Carrier Printer
+        4. Default Shipping Label Printer for current company (Settings)
         """
         company = self.env.company
 
@@ -128,10 +129,12 @@ class User(models.Model):
         workstation_label_printer_id = self._get_workstation_device(
             'printnode_workstation_label_printer_id')
 
-        printer = workstation_label_printer_id or self.user_label_printer or \
-            company.company_label_printer
+        delivery_carrier_printer = carrier_id.printer_id if carrier_id else None
 
-        if not printer:
+        printer = workstation_label_printer_id or self.user_label_printer or \
+            delivery_carrier_printer or company.company_label_printer
+
+        if not printer and raise_exc:
             raise UserError(_(
                 'Neither on company level, no on user level default label printer '
                 'is defined. Please, define it.'

@@ -15,3 +15,4 @@ from . import test_res_users
 from . import test_scales
 from . import test_scenario
 from . import test_stock_picking
+from . import test_delivery_carrier

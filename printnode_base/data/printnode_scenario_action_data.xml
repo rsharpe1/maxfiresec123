@@ -66,6 +66,20 @@
             <field name="reports_model_id" eval="ref('product.model_product_product')"/>
         </record>
 
+        <record id="print_single_lot_labels_on_transfer_after_validation" model="printnode.scenario.action">
+            <field name="name">Print single lot labels on Transfer (after validation)</field>
+            <field name="code">print_single_lot_labels_on_transfer_after_validation</field>
+            <field name="model_id" eval="ref('stock.model_stock_picking')"/>
+            <field name="reports_model_id" eval="ref('stock.model_stock_production_lot')"/>
+        </record>
+
+        <record id="print_multiple_lot_labels_on_transfer_after_validation" model="printnode.scenario.action">
+            <field name="name">Print multiple lot labels on Transfer (after validation)</field>
+            <field name="code">print_multiple_lot_labels_on_transfer_after_validation</field>
+            <field name="model_id" eval="ref('stock.model_stock_picking')"/>
+            <field name="reports_model_id" eval="ref('stock.model_stock_production_lot')"/>
+        </record>
+
         <record id="print_single_lot_label_on_transfer" model="printnode.scenario.action">
             <field name="name">Print single lot label on Transfer (real time)</field>
             <field name="code">print_single_lot_label_on_transfer</field>

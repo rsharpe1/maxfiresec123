@@ -180,6 +180,15 @@ class TestPrintNodeCommon(common.TransactionCase):
             'printnode_printed': False,
         })
 
+        # Delivery carrier
+        self.delivery_carrier = self.env['delivery.carrier'].create({
+            'name': 'Test Delivery Carrier',
+            'product_id': self.env['product.product'].create({
+                'name': 'Test Product',
+                'type': 'product',
+            }).id,
+        })
+
     def _create_patch_object(self, target, attribute):
         """
         Improved object patcher method from
