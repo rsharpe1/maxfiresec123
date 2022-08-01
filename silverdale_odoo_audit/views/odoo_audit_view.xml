@@ -11,7 +11,7 @@
                                 string="Run Report" 
                                 states="draft"/>
                         <button name="refresh_data" type="object" string="Refresh" states="processing"/>
-                        <button name="print_report" type="object" string="Print Report" states="ready,printed"/>
+                        <button name="print_report" type="object" string="Generate Report"   attrs="{'invisible':['|',('audit_report', '!=', False),('state','!=','ready')]}"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <div class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': [ ('state', '!=', 'processing')]}">
@@ -30,7 +30,7 @@
                             <group>
                                 <field name="date" readonly="1"/>
                                 <field name="file_name" invisible="1" />
-                                <field name="audit_report" filename="file_name" readonly="1" attrs="{'invisible':[('state','in',['draft','processing','ready'])]}"/>
+                                <field name="audit_report" filename="file_name" readonly="1" attrs="{'invisible':[('state','in',['draft','processing','failed'])]}"/>
                                 <field name="company_id" groups="base.group_multi_company" attrs="{'readonly':[('state','!=','draft')]}"/>
 
                             </group>
@@ -43,6 +43,7 @@
                                             <field name="is_categ_app" attrs="{'readonly':[('state','!=','draft')]}"/>    
                                             <field name="is_group_role" attrs="{'readonly':[('state','!=','draft')]}"/>    
                                             <field name="is_company_config" attrs="{'readonly':[('state','!=','draft')]}"/>    
+                                            <field name="is_show_studio_changes" attrs="{'readonly':[('state','!=','draft')]}"/>    
                                             <field name="is_tech_data" attrs="{'readonly':[('state','!=','draft')]}"/>    
                                         </group>
                                         <group>

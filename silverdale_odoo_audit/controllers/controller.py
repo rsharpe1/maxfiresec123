@@ -62,7 +62,7 @@ class OdooAuthController(CustomerPortal):
         file_loc = kw.get('data', False)
         if not os.path.isfile(file_loc):
         # if not file_loc:
-            report_sudo.write({'state': 'retry'})
+            report_sudo.write({'state': 'failed'})
             return data
         json_file = self.convert_report_to_json(file_loc)
 
@@ -70,7 +70,7 @@ class OdooAuthController(CustomerPortal):
             'tech_data': json_file,
             'state': 'ready',
             })
-
+        report_sudo.print_report()
         # os.remove(file_loc)
         data = json.dumps(data)
         return data

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from operator import is_
+from odoo.osv.expression import AND, OR
+
 import subprocess
 from odoo import models, fields, api, _
 import os
@@ -13,9 +15,7 @@ STATE_SELECTION = [
     ('draft', 'draft'),
     ('processing', 'Processing'),
     ('ready', 'Ready'),
-    ('printed', 'Printed'),
-    ('cancel', 'Cancelled'),
-    ('retry', 'Retry'),
+    ('failed', 'Failed'),
 ]
 
 
@@ -29,12 +29,13 @@ class OdooAudit(models.Model):
     industry_id = fields.Many2one('res.partner.industry')
     user_id = fields.Many2one('res.users', string="Audit By", default=lambda self: self.env.user)
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
-    date = fields.Datetime('Datetime', default=fields.Datetime.now)
+    date = fields.Datetime('Run Date', default=fields.Datetime.now)
     state = fields.Selection(STATE_SELECTION, default='draft')
     # Data fields
     master_data = fields.Text()
     duplicate_count = fields.Text()
     report_data = fields.Text()
+    studio_data = fields.Text()
     # For pylint data store in txt file
     tech_data = fields.Text()
     tech_file = fields.Binary()
@@ -46,14 +47,15 @@ class OdooAudit(models.Model):
     is_installed_app_chart = fields.Boolean(string="Installed App Chart", default=True)
     is_installed_app_list = fields.Boolean(string="Installed App List", default=True)
     is_categ_app = fields.Boolean(string="Installed App Category", default=True)
-    is_master_data = fields.Boolean(string="Show Master Data", default=True)
+    is_master_data = fields.Boolean(string="Master Data Coverage", default=True)
     is_group_role = fields.Boolean(string="Show Security Roles", default=True)
-    is_duplicated_count = fields.Boolean(string="Duplicated Count", default=True)
+    is_duplicated_count = fields.Boolean(string="Duplicated Records", default=True)
     is_tech_data = fields.Boolean(string="Code Quality", default=False)
     is_tech_data_ready = fields.Boolean(string="Technical Data Ready")
     is_manifest_data = fields.Boolean(string="Manifest details", default=False)
     is_company_config = fields.Boolean(string="Company Configuration")
     is_system_config = fields.Boolean(string="System Configuration")
+    is_show_studio_changes = fields.Boolean(string="Show Studio Changes")
 
     def action_run_report(self):
         """Run report"""
@@ -74,6 +76,8 @@ class OdooAudit(models.Model):
         if self.is_tech_data:
             self.state = "processing"
             self.generate_technical_data()
+        else:
+            self.print_report()
 
     def refresh_data(self):
         """Refresh form view when state in progress."""
@@ -87,8 +91,11 @@ class OdooAudit(models.Model):
         Get master dataset from audit.master.data
         save json data in master_data field
         """
+        domain = []
+        if self.company_id:
+            domain = ['|', ('company_id', '=', False),('company_id', '=', self.company_id.id)]
 
-        records = self.env['audit.master.data'].sudo().search([])
+        records = self.env['audit.master.data'].sudo().search(domain)
         data = {}
         for rec in records:
             data_set = {}
@@ -101,8 +108,11 @@ class OdooAudit(models.Model):
 
     def get_duplicated_data(self):
         """ Get duplicated data using odoo api"""
+        domain = []
+        if self.company_id:
+            domain = ['|', ('company_id', '=', False),('company_id', '=', self.company_id.id)]
 
-        records = self.env['duplicate.data.count'].sudo().search([])
+        records = self.env['duplicate.data.count'].sudo().search(domain)
         data = {}
 
         for rec in records:
@@ -153,7 +163,6 @@ class OdooAudit(models.Model):
         labels = [x['author'].title() for x in installed_apps]
         data_parse = dict()
         for i, j in zip(labels, values):
-            print("ssss")
             if i in data_parse:
                 data_parse[i] = data_parse[i] + j
             else:
@@ -193,24 +202,31 @@ class OdooAudit(models.Model):
 
     def get_company_config_data(self):
         """ Show company data"""
+
         data = {}
+        
         company_id = self.env['ir.model'].sudo().search(
-            [('model', '=', 'res.company')], limit=1).id
+            [('model', '=', 'res.company')], limit=1)
+        
         fields = self.env['ir.model.fields'].sudo().search(
-            [('model_id', '=', company_id)], order='modules desc')
+        [('model_id', '=', company_id.id)], order='modules desc')
         dic = {}
+        company_ids = self.env['res.company'].sudo().search([])
+        if self.company_id:
+            company_ids = self.company_id
+        for company in company_ids:
+            dic[company.id] = {}
+            for field in fields:
+                if dic.get(field.modules, False) != field.modules:
+                    dic[company.id][field.modules] = 'Module'
+                data = eval("company.{}".format(field.name))
 
-        for field in fields:
-            if dic.get(field.modules, False) != field.modules:
-                dic[field.modules] = 'Module'
-            data = eval("self.company_id.{}".format(field.name))
-
-            if field.ttype in ['boolean', 'char', 'float', \
-                               'interger', 'reference', 'selection', 'text']:
-                dic[field.field_description] = data
-            elif field.ttype in ['many2one']:
-                if len(data) == 1:
-                    dic[field.field_description] = data.name
+                if field.ttype in ['boolean', 'char', 'float', \
+                                'interger', 'reference', 'selection', 'text']:
+                    dic[company.id][field.field_description] = data
+                elif field.ttype in ['many2one']:
+                    if len(data) == 1:
+                        dic[company.id][field.field_description] = data.name
 
         return dic
 
@@ -220,10 +236,13 @@ class OdooAudit(models.Model):
                 'User Name':['grp1','grp1','grp1',...],
                 'User Name2':['grp1','grp1','grp1',...]]
         """
+        groups_id = self.env.ref('base.group_user').id
+        domain = [('groups_id', 'in', groups_id)]
+        if self.company_id:
+            domain = [('groups_id', 'in', groups_id), ('company_ids', 'in', self.company_id.id)]
 
         data = []
-        users = self.env['res.users'].sudo().search([])
-
+        users = self.env['res.users'].sudo().search(domain)
         for user in users:
             groups = user.groups_id.read_group(
                 [('users', 'in', user.id)],
@@ -236,6 +255,38 @@ class OdooAudit(models.Model):
             data.append(data_set)
         return data
 
+    def get_studio_models(self):
+        """
+            Get studio changes
+        """
+        data = {}
+        
+        models = self.env['ir.model'].sudo().search(
+            [('model', '=ilike', 'x_%')])
+        
+        return models
+
+    def get_studio_fields(self):
+        """
+            Get studio changes
+        """
+        data = {}
+        fields = self.env['ir.model.fields'].sudo().search(
+            [('name', '=ilike', 'x_studio_%')])
+        return fields
+
+    def get_studio_views(self):
+        """
+            Get studio changes
+        """
+        data = {}
+        studio_rec = self.env['ir.model.data'].sudo().search(
+            [('module', '=', 'studio_customization'), ('model', '=', 'ir.ui.view')])
+        views = self.env['ir.ui.view'].sudo().search(
+            [('model_data_id', 'in', studio_rec.ids)])
+
+        return views
+    
     def get_system_config_data(self):
         """ ---- """
         dic = {}
@@ -251,7 +302,7 @@ class OdooAudit(models.Model):
         self.get_portal_url()
 
         report_location = self.env['ir.config_parameter'].sudo().get_param(
-            'silversale_odoo_audit.technical_report_location')
+            'silverdale_odoo_audit.technical_report_location')
 
         if not os.path.isdir(report_location):
             try:
@@ -289,6 +340,5 @@ class OdooAudit(models.Model):
         self.write({
             'audit_report': audit_report,
             'file_name': self.name.replace('/', '_'),
-            'state': 'printed'
         })
-        return self.env.ref(report_name).report_action(self)
+        # return self.env.ref(report_name).report_action(self)

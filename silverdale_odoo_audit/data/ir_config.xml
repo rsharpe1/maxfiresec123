@@ -2,7 +2,7 @@
 <odoo>
 
     <record model="ir.config_parameter" id="audit_report_location">
-        <field name="key">silversale_odoo_audit.technical_report_location</field>
+        <field name="key">silverdale_odoo_audit.technical_report_location</field>
         <field name="value">/tmp/odoo</field>
     </record>
 

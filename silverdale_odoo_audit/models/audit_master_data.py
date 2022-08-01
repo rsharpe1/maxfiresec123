@@ -9,6 +9,7 @@ class AuditMasterData(models.Model):
 
     name = fields.Many2one('ir.model', string="Model")
     domain_line = fields.One2many('master.data.domain', 'master_data_id')
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     @api.onchange('name')
     def _onchange_name(self):
@@ -33,6 +34,7 @@ class DuplicateDataCount(models.Model):
 
     name = fields.Many2one('ir.model', string="Model")
     duplicate_data_line = fields.Many2many('ir.model.fields')
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     @api.onchange('name')
     def _onchange_name(self):
