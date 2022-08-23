@@ -1,0 +1,4 @@
+[submodule "sme"]
+	path = sme
+	url = git@github.com:silverdaletech/silverdale-extensions-15.git
+	branch = main
