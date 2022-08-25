@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="zuma_equipments_inherit_report_invoice_document" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@id='informations']" position="after">
+            <h4 class="mt16">
+                <t>
+                    <span>Equipment Information:</span>
+                </t>
+            </h4>
+            <div class="row mt32 mb32" id="equipment_information">
+                <div t-if="o.product_id" class="col-auto col-3 mw-100 mb-2">
+                    <strong>Equipment:</strong><br/>
+                    <p class="m-0" t-field="o.product_id"/>
+                </div>
+                <div t-if="o.lot_id" class="col-auto col-3 mw-100 mb-2">
+                    <strong>Serial Number:</strong>
+                    <p class="m-0" t-field="o.lot_id"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

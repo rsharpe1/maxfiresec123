@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="zuma_equipments_inherit_fsm_res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">zuma_equipments.inherit.fsm.res.config.settings.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="industry_fsm.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+
+            <div data-key="industry_fsm" position="inside">
+                <h2>Zuma Equipments</h2>
+                <div class="row mt16 o_settings_container" id="industry_fsm_equipments">
+                    <div class="col-12 col-lg-6 o_setting_box" id="equipment_location">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="location_id"/>
+                            <div class="text-muted">
+                                Select a virtual location for the equipment.
+                            </div>
+                            <div class="text-muted">
+                                <field name="location_id"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="equipment_location_dest">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="location_dest_id"/>
+                            <div class="text-muted">
+                                Select a virtual Destination location for the equipment.
+                            </div>
+                            <div class="text-muted">
+                                <field name="location_dest_id"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="equipment_product_categ">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="product_categ_id"/>
+                            <div class="text-muted">
+                                Select a category for the equipment. This will be set as default category
+                                on the product when created from helpdesk 'Add Customer Equipment'
+                                wizard.
+                            </div>
+                            <div class="text-muted">
+                                <field name="product_categ_id"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" name="auto_owner_assignment">
+                        <div class="o_setting_left_pane">
+                            <field name="auto_owner_assignment"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="auto_owner_assignment"/>
+                            <div class="text-muted">
+                                When activated owner will be auto assigned to the 'Partner Locations/Customers'
+                                upon validating the delivery of serialized products.
+                            </div>
+                        </div>
+                        <div class="o_setting_right_pane" name="owner_assignment_ids"
+                             attrs="{'invisible': [('auto_owner_assignment', '=', False)]}">
+                            <br/>
+                            <label for="owner_assignment_ids"/>
+                            <field name="owner_assignment_ids" class="oe_inline " widget="many2many_tags"/>
+                            <div class="text-muted">
+                                Specify the product categories for owner assignment.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="internal_locations">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="internal_location_ids"/>
+                            <div class="text-muted">
+                                Internal Stock Locations.
+                                Equipments on these locations will be available on the helpdesk ticket Equipments.
+                            </div>
+                            <div class="text-muted">
+                                <field name="internal_location_ids" widget="many2many_tags"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>

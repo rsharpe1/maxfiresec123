@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <!-- Inherit Form View to Modify it -->
+    <record id="zuma_equipments_inherit_view_task_form2" model="ir.ui.view">
+        <field name="name">zuma_equipments.inherit.view_task_form2</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='project_id']" position="after">
+                <field name="product_id"/>
+                <field name="lot_id"/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
