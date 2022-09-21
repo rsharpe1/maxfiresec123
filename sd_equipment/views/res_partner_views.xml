@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <record id="res_partner_form_inherit" model="ir.ui.view">
+        <field name="name">res.partner.for.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Customer Equipment" attrs="{'invisible': [('parent_id', '!=', False)]}">
+                    <field name="quant_ids" readonly="1" >
+                        <tree>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="location_id"/>
+                            <field name="create_date"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="allow_equipment"  attrs="{'invisible': [('type', 'not in',('contact'))]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

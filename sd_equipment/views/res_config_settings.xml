@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sd_equipment_inherit_sb_stock_inherit_res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">sd_equipment.inherit.stock.extension.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sd_stock.sb_stock_inherit_res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@id='module_sd_equipment']" position="after">
+                    <div class="col-12 col-lg-6 o_setting_box" id="equipment_location" attrs="{'invisible':[('module_sd_equipment', '=', False)]}">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="location_id"/>
+                            <div class="text-muted">
+                                Select a virtual location for the equipment.
+                            </div>
+                            <div class="text-muted">
+                                <field name="location_id" attrs="{'readonly':[('is_license_valid', '=', False)]}"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="equipment_location_dest" attrs="{'invisible':[('module_sd_equipment', '=', False)]}">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <label for="location_dest_id"/>
+                            <div class="text-muted">
+                                Select a virtual Destination location for the equipment.
+                            </div>
+                            <div class="text-muted">
+                                <field name="location_dest_id" attrs="{'readonly':[('is_license_valid', '=', False)]}"/>
+                            </div>
+                        </div>
+                    </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
