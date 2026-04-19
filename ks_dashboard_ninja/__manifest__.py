@@ -7,7 +7,7 @@ Revamp your Odoo Dashboard like never before! It is one of the best dashboard od
 """,
 
 	'description': """
-Dashboard Ninja v14.0,
+Dashboard Ninja v15.0,
         Odoo Dashboard,
         Dashboard,
         Dashboards,
